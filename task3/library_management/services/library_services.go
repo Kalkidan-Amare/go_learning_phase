@@ -45,17 +45,21 @@ func (l *Library) BorrowBook(bookID int, memberID int)error{
 		return errors.New("book not found")
 	}
 	if book.Status == "Borrowed"{
-		return errors.New("book already borrowed")
+		return errors.New("book not available")
 	}
 
 	member,exists := l.members[memberID]
 	if !exists{
 		return errors.New("user not found")
 	}
-	member.BorrowedBooks = append(member.BorrowedBooks, book)
 
-	p := &book
-	p.Status = "Borrowed"
+	member.BorrowedBooks = append(member.BorrowedBooks, book)
+	l.members[memberID] = member
+
+	// p := &book
+	// p.Status = "Borrowed"
+	book.Status = "Borrowed"
+	l.books[bookID] = book
 
 	return nil
 }
@@ -71,8 +75,10 @@ func (l *Library) ReturnBook(bookID,memberID int)error{
 		return errors.New("user not found")
 	}
 
-	p := &book
-	p.Status = "Avaliable"
+	// p := &book
+	// p.Status = "Available"
+	book.Status = "Available"
+	l.books[bookID] = book
 
 	for i,b := range l.books{
 		if b.ID == bookID{
@@ -87,7 +93,7 @@ func (l *Library) ReturnBook(bookID,memberID int)error{
 func (l *Library) ListAvailableBooks()[]models.Book{
 	var list []models.Book
 	for _,book := range l.books{
-		if book.Status == "Avaliable"{
+		if book.Status == "Available"{
 			list = append(list,book)
 		}
 	}

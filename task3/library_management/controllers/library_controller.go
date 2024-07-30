@@ -10,6 +10,7 @@ func RunLibrary() {
 	library := services.NewLibrary()
 
 	for {
+		fmt.Println("--------------------------------")
 		fmt.Println("Library Management System")
 		fmt.Println("0. Register")
 		fmt.Println("1. Add Book")
@@ -19,6 +20,7 @@ func RunLibrary() {
 		fmt.Println("5. List Available Books")
 		fmt.Println("6. List Borrowed Books")
 		fmt.Println("7. Exit")
+		fmt.Println("--------------------------------")
 		fmt.Print("Enter your choice: ")
 
 		var choice int
