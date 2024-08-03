@@ -4,7 +4,9 @@ import (
     "context"
     "fmt"
     "log"
+	"os"
 
+	"github.com/joho/godotenv"
     "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
@@ -17,8 +19,18 @@ type Trainer struct {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mongoURI := os.Getenv("MONGO_URI")
+	if mongoURI == "" {
+		log.Fatal("MONGO_URI is not set in .env file")
+	}
+
 	//set client options
-	clientOptions := options.Client().ApplyURI("mongodb+srv://kalkidanamare11a:123456Ka@cluster0.d2j0zkv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+	clientOptions := options.Client().ApplyURI(mongoURI)
 
 	// connect to mongodb
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -40,6 +52,8 @@ func main() {
 	misty := Trainer{"Misty", 10, "Pallet Town"}
 	brock := Trainer{"Brock", 15, "broklick"}
 
+
+	//INSERT a single
 	insert, err := collection.InsertOne(context.TODO(),ash)
 	if err != nil {
 		log.Fatal(err)
@@ -47,6 +61,8 @@ func main() {
 
 	fmt.Println("Inserted a single document: ", insert.InsertedID)
 
+
+	//Insert a new document MANY
 	trainers := []interface{}{misty,brock}
 	insertMany, err := collection.InsertMany(context.TODO(),trainers)
 
@@ -55,6 +71,7 @@ func main() {
 	}
 
 	fmt.Println("Inserted multiple documents: ", insertMany.InsertedIDs)
+
 
 	// Updating data
 	filter := bson.D{{"name","Ash"}}
@@ -72,6 +89,8 @@ func main() {
 
 	fmt.Printf("Matched %v documents and updated %v documents.\n", updateResult.MatchedCount, updateResult.ModifiedCount)
 
+	
+	//GET ONE
 	var result Trainer
 
 	err = collection.FindOne(context.TODO(), bson.D{{"name","Ash"}}).Decode(&result)
@@ -81,6 +100,8 @@ func main() {
 
 	fmt.Printf("Found a single documet: %+v\n", result)
 
+
+	//GET ALL
 	findOptions := options.Find()
 	findOptions.SetLimit(2)
 
@@ -108,6 +129,8 @@ func main() {
 
 	fmt.Printf("Found multiple documents (array of pointers): %+v\n", results)
 
+	
+	//DELETE
 	deleteResult, err := collection.DeleteOne(context.TODO(), bson.D{{"name","Brock"}})
 	if err != nil {
 		log.Fatal(err)
