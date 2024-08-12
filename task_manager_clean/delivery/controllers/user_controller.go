@@ -29,20 +29,20 @@ func (c *UserController) Register(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
+	
 	ctx.JSON(http.StatusCreated, registeredUser)
 }
 
 func (c *UserController) Login(ctx *gin.Context) {
-	var authUser *domain.AuthUser
-	if err := ctx.BindJSON(authUser); err != nil {
+	var authUser domain.AuthUser
+	if err := ctx.BindJSON(&authUser); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	token, err := c.UserUsecase.LoginUser(authUser)
+	token, err := c.UserUsecase.LoginUser(&authUser)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
 

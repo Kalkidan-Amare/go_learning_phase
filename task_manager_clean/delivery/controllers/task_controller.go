@@ -6,7 +6,6 @@ import (
 	// "task_manager/infrastructure"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -65,13 +64,13 @@ func (tc *TaskController) CreateTask(c *gin.Context) {
 	}
 
 	// Create the task with the logged-in user ID
-	createdTask, err := tc.TaskUsecase.CreateTask(&newTask, claims)
+	createdTaskId, err := tc.TaskUsecase.CreateTask(&newTask, claims)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, createdTask)
+	c.JSON(http.StatusOK, createdTaskId)
 }
 
 func (tc *TaskController) UpdateTask(c *gin.Context) {
@@ -103,21 +102,20 @@ func (tc *TaskController) UpdateTask(c *gin.Context) {
 		return
 	}
 
-	update := bson.M{
-		"id": 		   id,
-		"title":       updatedTask.Title,
-		"description": updatedTask.Description,
-		"due_date":    updatedTask.DueDate,
-		"status":      updatedTask.Status,
-		"user_id":     task.UserId,
-	}
+	// update := bson.M{
+	// 	"title":       updatedTask.Title,
+	// 	"description": updatedTask.Description,
+	// 	"due_date":    updatedTask.DueDate,
+	// 	"status":      updatedTask.Status,
+	// }
 
-	if err := tc.TaskUsecase.UpdateTask(id, update); err != nil {
+	result,err := tc.TaskUsecase.UpdateTask(id, &updatedTask); 
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, updatedTask)
+	c.JSON(http.StatusOK, result)
 }
 
 func (tc *TaskController) DeleteTask(c *gin.Context) {

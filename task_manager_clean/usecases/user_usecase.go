@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	// "fmt"
 	"task_manager/domain"
 	"task_manager/infrastructure"
 
@@ -18,7 +19,7 @@ func NewUserUsecase(repo domain.UserRepositoryInterface) *UserUsecase {
 	}
 }
 
-func (u *UserUsecase) CreateUser(user *domain.User) (*domain.User, error) {
+func (u *UserUsecase) CreateUser(user *domain.User) (interface{}, error) {
 	existingUser, _ := u.UserRepo.GetUserByUsername(user.Username)
 	if existingUser != nil {
 		return nil, errors.New("username already exists")
@@ -30,9 +31,14 @@ func (u *UserUsecase) CreateUser(user *domain.User) (*domain.User, error) {
 	}
 	user.Password = hashedPassword
 
-	err = u.UserRepo.AddUser(user)
+	insertedID,err := u.UserRepo.AddUser(user)
 	if err != nil {
 		return nil, err
+	}
+	// fmt.Println(insertedID)
+	// Cast insertedID to ObjectID and set it to the user's ID
+	if objectId, ok := insertedID.(primitive.ObjectID); ok {
+		user.ID = objectId
 	}
 
 	return user, nil

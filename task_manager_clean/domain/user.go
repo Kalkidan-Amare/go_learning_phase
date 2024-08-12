@@ -15,7 +15,7 @@ type Claims struct {
 }
 
 type User struct {
-	ID       primitive.ObjectID `json:"id" bson:"_id"`
+	ID       primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	Username string             `json:"username"`
 	Password string             `json:"password"`
 	Role     string             `json:"role"`
@@ -33,12 +33,12 @@ type AuthUser struct {
 }
 
 type UserUsecaseInterface interface {
-	CreateUser(user *User) (*User, error)
+	CreateUser(user *User) (interface{}, error)
 	LoginUser(user *AuthUser) (string, error)
 }
 
 type UserRepositoryInterface interface {
-	AddUser(user *User) error
+	AddUser(user *User) (interface{},error)
 	GetUserByUsername(username string) (*User, error)
 	GetUserByID(objectID primitive.ObjectID) (*User, error)
 }

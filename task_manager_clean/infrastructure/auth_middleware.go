@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -9,17 +10,24 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/joho/godotenv"
 )
 
 func ValidateJWT(tokenString string) (*domain.Claims, error) {
-    jwtKey, ok := os.LookupEnv("JWT_KEY")
-	if !ok {
-		return nil, errors.New("JWT_KEY not found in environment")
+    if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
 	}
+    jwtKey := os.Getenv("JWTKEY")
+    if jwtKey == "" {
+        log.Fatal("JWT_KEY not found in environment")
+    }
 
+    jwtKeyBytes := []byte(jwtKey)
+
+    // Parse the token with the claims
     claims := &domain.Claims{}
     token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-        return jwtKey, nil
+        return jwtKeyBytes, nil
     })
     if err != nil {
         if err == jwt.ErrSignatureInvalid {

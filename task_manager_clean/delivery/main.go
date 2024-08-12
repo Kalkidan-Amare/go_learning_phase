@@ -4,9 +4,12 @@ import (
 	"context"
 	"log"
 	"task_manager/config"
+	"task_manager/delivery/controllers"
+	"task_manager/delivery/routers"
 	"task_manager/repositories"
 	"task_manager/usecases"
-	"task_manager/controllers"
+
+	// "task_manager/controllers"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,10 +40,10 @@ func main() {
 
 	r := gin.Default()
 
-	publicRoutes := r.Group("/api")
+	publicRoutes := r.Group("/")
 	routers.SetPublicRoutes(publicRoutes, userController)
 
-	protectedRoutes := r.Group("/api")
+	protectedRoutes := r.Group("/tasks")
 	routers.SetProtectedRoutes(protectedRoutes, taskController, userController)
 
 	r.Run()

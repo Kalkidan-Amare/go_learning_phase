@@ -1,19 +1,23 @@
 package infrastructure
 
 import (
-	"errors"
+	"log"
 	"os"
-	"time"
 	"task_manager/domain"
+	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/joho/godotenv"
 )
 
 func GenerateJWT(user *domain.User) (string, error) {
-	jwtKey, ok := os.LookupEnv("JWT_KEY")
-	if !ok {
-		return "", errors.New("JWT_KEY not found")
+	if err := godotenv.Load(); err != nil {
+		log.Fatal("Error loading .env file")
 	}
+    jwtKey := os.Getenv("JWTKEY")
+    if jwtKey == "" {
+        log.Fatal("JWTKEY is not set in .env file")
+    }
 
 	// Set expiration time for the token
 	expirationTime := time.Now().Add(24 * time.Hour).Unix()

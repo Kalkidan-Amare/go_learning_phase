@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"task_manager/domain"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -50,20 +50,36 @@ func (r *TaskRepository) AddTask(task *domain.Task) (interface{},error) {
 	return inserted.InsertedID,err
 }
 
-func (r *TaskRepository) UpdateTask(id primitive.ObjectID, updatedTask bson.M) (interface{},error) {
-	filter := bson.M{"_id": id}
-	update := bson.M{"$set": updatedTask}
+func (r *TaskRepository) UpdateTask(id primitive.ObjectID, taskData *domain.Task) (*domain.Task, error) {
+    filter := bson.M{"_id": id}
+    update := bson.M{"$set": taskData}
+    
+    result := r.collection.FindOneAndUpdate(context.Background(), filter, update)
+    if result.Err() != nil {
+        return nil, result.Err()
+    }
 
-	task, err := r.collection.UpdateOne(context.TODO(), filter, update)
-	if err != nil {
-		return nil, err
-	}
-	if task.MatchedCount == 0 {
-		return nil, errors.New("no task found with the given ID")
-	}
+    var decoded domain.Task
+    if err := result.Decode(&decoded); err != nil {
+        return nil, err
+    }
 
-	return task, nil
+	taskData.ID = decoded.ID
+	taskData.UserId = decoded.UserId
+	// fmt.Println(decoded.UserId)
+
+	// updatedTask := domain.Task{
+	// 	ID:          decoded.ID,
+	// 	Title:       taskData["title"].(string),
+	// 	Description: taskData["description"].(string),
+	// 	DueDate:     taskData["due_date"].(string),
+	// 	Status:      taskData["status"].(string),
+	// 	UserId:      decoded.UserId,
+	// }
+
+    return taskData, nil
 }
+
 
 func (r *TaskRepository) DeleteTask(id primitive.ObjectID) error {
 	_, err := r.collection.DeleteOne(context.TODO(), bson.M{"_id": id})
