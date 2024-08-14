@@ -1,3 +1,5 @@
 go_mongodb/.env
 task_manager_with_mongodb/.env
 task_manager_db_auth/.env  
+task_manager_clean/.env
+task_manager_testing/.env
