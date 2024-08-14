@@ -47,6 +47,11 @@ func (m *MongoCollection) FindOneAndReplace(ctx context.Context, filter, replace
 	return &MongoSingleResult{SingleResult: result}
 }
 
+func (m *MongoCollection) FindOneAndUpdate(ctx context.Context, filter, update interface{}, opts ...*options.FindOneAndUpdateOptions) domain.SingleResult {
+	result := m.Collection.FindOneAndUpdate(ctx, filter, update, opts...)
+	return &MongoSingleResult{SingleResult: result}
+}
+
 func (m *MongoCollection) CountDocuments(ctx context.Context, filter interface{}, opts ...*options.CountOptions) (int64, error) {
 	return m.Collection.CountDocuments(ctx, filter, opts...)
 }

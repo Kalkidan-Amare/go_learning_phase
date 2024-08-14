@@ -54,7 +54,7 @@ func (r *TaskRepository) UpdateTask(id primitive.ObjectID, taskData *domain.Task
     filter := bson.M{"_id": id}
     update := bson.M{"$set": taskData}
     
-    result := r.collection.FindOneAndReplace(context.Background(), filter, update)
+    result := r.collection.FindOneAndUpdate(context.Background(), filter, update)
     if result.Err() != nil {
         return nil, result.Err()
     }

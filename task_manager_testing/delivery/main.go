@@ -7,7 +7,7 @@ import (
 	"task_manager/delivery/controllers"
 	"task_manager/delivery/routers"
 	"task_manager/repositories"
-	"task_manager/usecases"
+	"task_manager/usecase"
 
 	// "task_manager/controllers"
 

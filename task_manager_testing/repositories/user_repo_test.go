@@ -56,6 +56,7 @@ func (suite *UserRepositorySuite) TestAddUser() {
          Username: "testuser",
          Password: "password123",
      }
+   //   insertResult := user
 
      insertResult := &mongo.InsertOneResult{InsertedID: user.ID}
      suite.collection.On("InsertOne", mock.Anything, user).Return(insertResult, nil).Once()
