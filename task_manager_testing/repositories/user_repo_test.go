@@ -16,7 +16,7 @@ import (
 
 )
 
-var mockUser = mock.AnythingOfType("*domain.User")
+// var mockUser = mock.AnythingOfType("*domain.User")
 
 type UserRepositorySuite struct {
    suite.Suite

@@ -6,6 +6,7 @@ import (
 	"task_manager/domain"
 	"task_manager/infrastructure"
 
+	// "github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -33,7 +34,7 @@ func (u *UserUsecase) CreateUser(user *domain.User) (interface{}, error) {
 
 	insertedID,err := u.UserRepo.AddUser(user)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("Internal server error")
 	}
 	// fmt.Println(insertedID)
 	// Cast insertedID to ObjectID and set it to the user's ID
@@ -58,7 +59,7 @@ func (u *UserUsecase) LoginUser(authUser *domain.AuthUser) (string, error) {
 
 	token, err := infrastructure.GenerateJWT(user)
 	if err != nil {
-		return "", err
+		return "", errors.New("Internal server error")
 	}
 
 	return token, nil

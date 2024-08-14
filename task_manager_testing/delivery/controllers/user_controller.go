@@ -20,7 +20,7 @@ func NewUserController(usecase domain.UserUsecaseInterface) *UserController {
 func (c *UserController) Register(ctx *gin.Context) {
 	var user domain.User
 	if err := ctx.BindJSON(&user); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user"})
 		return
 	}
 
@@ -36,7 +36,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 func (c *UserController) Login(ctx *gin.Context) {
 	var authUser domain.AuthUser
 	if err := ctx.BindJSON(&authUser); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid auth user"})
 		return
 	}
 

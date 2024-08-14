@@ -1,19 +1,19 @@
-package controller_test
+package controllers_test
 
 import (
-   "task_manager/controller"
-   "task_manager/domain"
-   "task_manager/usecase"
-   "bytes"
-   "encoding/json"
-   "net/http"
-   "net/http/httptest"
-   "testing"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"net/http/httptest"
+	"task_manager/delivery/controllers"
+	"task_manager/domain"
+	"task_manager/mocks"
+	"testing"
 
-   "github.com/gorilla/mux"
-   "github.com/stretchr/testify/assert"
-   "github.com/stretchr/testify/mock"
-   "github.com/stretchr/testify/suite"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type MockUserUsecase struct {
@@ -27,44 +27,155 @@ func (m *MockUserUsecase) CreateUser(user *domain.User) (interface{}, error) {
 
 type UserControllerSuite struct {
    suite.Suite
-   controller *controller.UserController
-   usecase    *MockUserUsecase
-   router     *mux.Router
+   controller *controllers.UserController
+   mockUsecase    *mocks.UserUsecaseInterface
+   // router     *mux.Router
 }
 
 func (suite *UserControllerSuite) SetupTest() {
-   suite.usecase = new(MockUserUsecase)
-   suite.controller = &controller.UserController{usecase: suite.usecase}
-   suite.router = mux.NewRouter()
-   suite.router.HandleFunc("/users", suite.controller.CreateUser).Methods("POST")
+   suite.mockUsecase = new(mocks.UserUsecaseInterface)
+   suite.controller = controllers.NewUserController(suite.mockUsecase)
 }
 
-func (suite *UserControllerSuite) TestCreateUser_Success() {
-   user := &domain.User{Username: "newUser", Password: "password"}
-   jsonUser, _ := json.Marshal(user)
+func (suite *UserControllerSuite) TestRegisterController() {
+	// Success case
+	suite.Run("TestRegister_success", func() {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		user := &domain.User{
+         ID:       primitive.NewObjectID(),
+         Username: "testuser",
+         Password: "password123",
+     }
 
-   suite.usecase.On("CreateUser", user).Return(user.ID, nil)
+		// registerduser := &domain.User{
+		// 	ID:       user.ID,
+		// 	Username: user.Username,
+		// 	Role:     user.Role,
+		// }
 
-   req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(jsonUser))
-   res := httptest.NewRecorder()
-   suite.router.ServeHTTP(res, req)
+		suite.mockUsecase.On("CreateUser", user).Return(user, nil).Once()
 
-   assert.Equal(suite.T(), http.StatusOK, res.Code)
-   assert.Contains(suite.T(), res.Body.String(), user.ID.Hex())
+		body, err := json.Marshal(user)
+		suite.Nil(err)
+		ctx.Request = httptest.NewRequest("POST", "/register", bytes.NewBuffer(body))
+
+		suite.controller.Register(ctx)
+      expectedResponse, err := json.Marshal(user)
+      suite.Nil(err)
+
+		suite.Equal(201, w.Code)
+		suite.Equal(string(expectedResponse), w.Body.String())
+	})
+
+	// Invalid request case
+	suite.Run("TestRegister_invalid_request", func() {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+
+		ctx.Request = httptest.NewRequest("POST", "/register", nil)
+
+		suite.controller.Register(ctx)
+      expected, err := json.Marshal(gin.H{"error": "Invalid user"})
+		suite.Nil(err)
+
+		suite.Equal(400, w.Code)
+		suite.Equal(string(expected), w.Body.String())
+	})
+
+	// Failure case
+	suite.Run("TestRegister_failure", func() {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		user := &domain.User{
+         ID:       primitive.NewObjectID(),
+         Username: "testuser",
+         Password: "password123",
+     }
+
+		suite.mockUsecase.On("CreateUser", user).Return(nil, errors.New("Internal server error")).Once()
+
+		body, err := json.Marshal(user)
+		suite.Nil(err)
+		ctx.Request = httptest.NewRequest("POST", "/register", bytes.NewReader(body))
+
+		suite.controller.Register(ctx)
+		expected, err := json.Marshal(gin.H{"error": "Internal server error"})
+		suite.Nil(err)
+
+		suite.Equal(500, w.Code)
+		suite.Equal(string(expected), w.Body.String())
+	})
 }
 
-func (suite *UserControllerSuite) TestCreateUser_Conflict() {
-   user := &domain.User{Username: "existingUser"}
-   jsonUser, _ := json.Marshal(user)
+func (suite *UserControllerSuite) TestLoginController() {
+	// Success case
+	suite.Run("TestLogin_success", func() {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		authUser := &domain.AuthUser{
+			Username: "testuser",
+			Password: "password123",
+		}
+      token := "sampletoken"
 
-   suite.usecase.On("CreateUser", user).Return(nil, errors.New("username already exists"))
+		suite.mockUsecase.On("LoginUser", authUser).Return("token", nil).Once()
 
-   req, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(jsonUser))
-   res := httptest.NewRecorder()
-   suite.router.ServeHTTP(res, req)
+		body, err := json.Marshal(authUser)
+		suite.Nil(err)
+		ctx.Request = httptest.NewRequest("POST", "/login", bytes.NewReader(body))
 
-   assert.Equal(suite.T(), http.StatusConflict, res.Code)
-   assert.Contains(suite.T(), res.Body.String(), "username already exists")
+		suite.controller.Login(ctx)
+		expectedResponse, err := json.Marshal(gin.H{"token":token})
+      suite.Nil(err)
+
+		suite.Equal(200, w.Code)
+		suite.Equal(string(expectedResponse), w.Body.String())
+	})
+
+	// Invalid request case
+	suite.Run("TestLogin_invalid_request", func() {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+
+		ctx.Request = httptest.NewRequest("POST", "/login", nil)
+
+		suite.controller.Login(ctx)
+		expected, err := json.Marshal(gin.H{"error": "Invalid auth user"})
+		suite.Nil(err)
+
+		suite.Equal(400, w.Code)
+		suite.Equal(string(expected), w.Body.String())
+	})
+
+	// Failure case
+	suite.Run("TestLogin_failure", func() {
+		w := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(w)
+		authUser := &domain.AuthUser{
+			Username: "testuser",
+			Password: "password123",
+		}
+
+		suite.mockUsecase.On("LoginUser", authUser).Return("", errors.New("Internal server error")).Once()
+
+		body, err := json.Marshal(authUser)
+		suite.Nil(err)
+		ctx.Request = httptest.NewRequest("POST", "/login", bytes.NewReader(body))
+
+		suite.controller.Login(ctx)
+		expected, err := json.Marshal(gin.H{"error": "Internal server error"})
+		suite.Nil(err)
+
+		suite.Equal(500, w.Code)
+		suite.Equal(string(expected), w.Body.String())
+	})
+}
+
+
+
+func (suite *UserControllerSuite) TearDownSuite() {
+   suite.mockUsecase.AssertExpectations(suite.T())
 }
 
 func TestUserControllerSuite(t *testing.T) {
