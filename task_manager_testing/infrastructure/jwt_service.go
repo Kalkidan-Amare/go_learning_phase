@@ -10,7 +10,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func GenerateJWT(user *domain.User) (string, error) {
+var GenerateJWT = func(user *domain.User) (string, error) {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("Error loading .env file")
 	}

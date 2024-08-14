@@ -117,7 +117,7 @@ func (suite *UserControllerSuite) TestLoginController() {
 			Username: "testuser",
 			Password: "password123",
 		}
-      token := "sampletoken"
+      token := "token"
 
 		suite.mockUsecase.On("LoginUser", authUser).Return("token", nil).Once()
 
@@ -157,17 +157,17 @@ func (suite *UserControllerSuite) TestLoginController() {
 			Password: "password123",
 		}
 
-		suite.mockUsecase.On("LoginUser", authUser).Return("", errors.New("Internal server error")).Once()
+		suite.mockUsecase.On("LoginUser", authUser).Return("", errors.New("unauthorized user")).Once()
 
 		body, err := json.Marshal(authUser)
 		suite.Nil(err)
 		ctx.Request = httptest.NewRequest("POST", "/login", bytes.NewReader(body))
 
 		suite.controller.Login(ctx)
-		expected, err := json.Marshal(gin.H{"error": "Internal server error"})
+		expected, err := json.Marshal(gin.H{"error": "unauthorized user"})
 		suite.Nil(err)
 
-		suite.Equal(500, w.Code)
+		suite.Equal(401, w.Code)
 		suite.Equal(string(expected), w.Body.String())
 	})
 }
